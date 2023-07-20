@@ -1,0 +1,47 @@
+
+---
+- name: Update servers
+  hosts: "{{server}}"
+  become: yes
+  vars:
+    interface: "{{ ansible_default_ipv4['interface'] }}"
+    src_file: ./wg/wg0.conf
+    dest_file: /etc/wireguard/wg0.conf
+    priv_key: /etc/wireguard/privatekey
+
+  tasks:
+
+  - name: Update repositories cache and install "wireguard" and "resolvconf" package
+    ansible.builtin.apt:
+      name:
+      - wireguard
+      - resolvconf
+      - iptables
+      - qrencode
+      state: "latest"
+      update_cache: yes
+
+  - name: Create private and public keys
+    ansible.builtin.shell:
+      cmd: wg genkey | tee /etc/wireguard/privatekey | wg pubkey | tee /etc/wireguard/publickey && chmod 600 /etc/wireguard/privatekey
+
+  - name: Copy wireguard config file
+    ansible.builtin.copy:
+      src: "{{ src_file }}"
+      dest: "{{ dest_file }}"
+      mode: '0600'
+
+  - name: Configure wireguard
+    ansible.builtin.shell:
+      cmd: sed -i -e "s*@PRIV@*$(cat {{priv_key}})*" -e 's*@INT@*{{interface}}*' {{dest_file}}
+
+  - name: Port forward
+    ansible.builtin.shell:
+      cmd: echo "net.ipv4.ip_forward=1" » /etc/sysctl.conf && sysctl -p
+
+  - name: Enable service wg-quick, and start
+    ansible.builtin.service:
+      name: wg-quick@wg0
+      state: started
+      enabled: yes
+...

@@ -1,0 +1,54 @@
+
+---
+
+- name: Add neww user
+  hosts: "{{server}}"
+  become: yes
+  vars:
+    srv_conf: /etc/wireguard/wg0.conf
+    usr_src_conf: ./wg/usr0.conf
+    usr_conf: /etc/wireguard/{{uname}}/{{uname}}_{{server}}.conf
+    srv_pub_key: /etc/wireguard/publickey
+    usr_pub_key: /etc/wireguard/{{uname}}/{{uname}}_pub
+    usr_priv_key: /etc/wireguard/{{uname}}/{{uname}}_priv
+    qrcode: /etc/wireguard/{{uname}}/{{uname}}_qr.png
+
+  tasks:
+
+  - name: Create a directory if it does not exist
+    ansible.builtin.file:
+      path: /etc/wireguard/{{uname}}
+      state: directory
+      mode: '0755'
+
+  - name: Create user private and public keys
+    ansible.builtin.shell:
+      cmd: wg genkey | tee {{usr_priv_key}} | wg pubkey | tee {{usr_pub_key}} && chmod 600 {{usr_priv_key}}
+
+  - name: Copy source user config
+    ansible.builtin.copy:
+      src: "{{ usr_src_conf }}"
+      dest: "{{ usr_conf }}"
+      mode: '0600'
+
+  - name: Configure user file
+    ansible.builtin.shell:
+      cmd: sed -i -e "s*@PRIV@*$(cat {{ usr_priv_key }})*"
+                  -e "s*@PUB@*$(cat {{ srv_pub_key }})*"
+                  -e "s*@SRVIP@*{{ ansible_default_ipv4['address'] }}*"
+                  -e "s*@USRIP@*{{ usr_ip }}*"
+                  {{usr_conf}}
+
+  - name: Add user to server config
+    ansible.builtin.shell:
+      cmd: echo "\n#{{uname}}\n[PEER]\nPublicKey = $(cat {{usr_pub_key}})\nAllowedIPs = {{usr_ip}}/32\n" >> {{srv_conf}}
+
+  - name: Create QRcode
+    ansible.builtin.shell:
+      cmd: qrencode -t png -o {{qrcode}} -r {{usr_conf}}
+
+  - name: Reload server config
+    ansible.builtin.service:
+      name: wg-quick@wg0
+      state: reloaded
+...

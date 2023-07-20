@@ -1,0 +1,5 @@
+
+---
+ansible_user                : root
+anible_ssh_private_key_file : $HOME/.ssh/ru
+...
