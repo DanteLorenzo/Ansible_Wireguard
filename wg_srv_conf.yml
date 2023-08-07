@@ -1,0 +1,11 @@
+
+---
+- name: Init servers
+  hosts: "{{hosts}}"
+
+  roles:
+    - wireguard_server_configure
+  
+
+
+...

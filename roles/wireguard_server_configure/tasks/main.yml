@@ -1,0 +1,37 @@
+---
+# tasks file for wireguard_server_config
+- name: Update repositories cache and install packages
+  ansible.builtin.apt:
+    name:
+    - wireguard
+    - resolvconf
+    - iptables
+    - qrencode
+    state: "present"
+    update_cache: yes
+
+- name: Generate Wireguard keypair
+  ansible.builtin.shell:
+    cmd: wg genkey | tee /etc/wireguard/privatekey | wg pubkey | tee /etc/wireguard/publickey && chmod 600 /etc/wireguard/privatekey
+  args:
+    creates: /etc/wireguard/privatekey
+
+- name: Copy wireguard config file
+  ansible.builtin.copy:
+    src: "{{ src_file }}"
+    dest: "{{ dest_file }}"
+    mode: '0600'
+
+- name: Configure wireguard
+  ansible.builtin.shell:
+    cmd: sed -i -e "s*@PRIV@*$(cat {{priv_key}})*" -e 's*@INT@*{{interface}}*' {{dest_file}}
+
+- name: Port forward
+  ansible.builtin.shell:
+    cmd: echo "net.ipv4.ip_forward=1" » /etc/sysctl.conf && sysctl -p
+
+- name: Enable service wg-quick, and start
+  ansible.builtin.service:
+    name: wg-quick@wg0
+    state: started
+    enabled: yes

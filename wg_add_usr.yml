@@ -1,0 +1,9 @@
+
+---
+
+- name: Add neww user
+  hosts: "{{hosts}}"
+  become: yes
+  
+  roles:
+    - wireguard_add_user

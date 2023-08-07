@@ -1,0 +1,9 @@
+---
+# vars file for wireguard_add_user
+srv_conf: /etc/wireguard/wg0.conf
+usr_src_conf: usr.conf
+usr_conf: /etc/wireguard/{{uname}}/{{uname}}_{{hosts}}.conf
+srv_pub_key: /etc/wireguard/publickey
+usr_pub_key: /etc/wireguard/{{uname}}/{{uname}}_pub
+usr_priv_key: /etc/wireguard/{{uname}}/{{uname}}_priv
+qrcode: /etc/wireguard/{{uname}}/{{uname}}_qr.png

@@ -1,0 +1,22 @@
+prod_vpn:
+  
+  us:
+    hosts:
+    
+    vars:
+  
+  fr:
+    hosts:
+
+    vars:
+  
+  nl:
+    hosts:
+
+    vars:
+
+  ru:
+    hosts:
+
+    vars:
+

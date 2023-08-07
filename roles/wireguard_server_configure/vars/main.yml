@@ -1,0 +1,6 @@
+---
+# vars file for wireguard_server_config
+interface: "{{ ansible_default_ipv4['interface'] }}"
+src_file: wg0.conf
+dest_file: /etc/wireguard/wg0.conf
+priv_key: /etc/wireguard/privatekey
